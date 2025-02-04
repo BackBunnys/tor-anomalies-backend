@@ -13,6 +13,15 @@ public class UserMetrics {
     private BigDecimal users;
     private String country;
 
+    public UserMetrics() {
+    }
+
+    public UserMetrics(LocalDate date, BigDecimal users, String country) {
+        this.date = date;
+        this.users = users;
+        this.country = country;
+    }
+
     public LocalDate getDate() {
         return date;
     }

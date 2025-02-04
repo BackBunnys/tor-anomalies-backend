@@ -7,6 +7,14 @@ public class Interval<T> {
     private T start;
     private T end;
 
+    public Interval(T start, T end) {
+        this.start = start;
+        this.end = end;
+    }
+
+    public Interval() {
+    }
+
     public T getStart() {
         return start;
     }

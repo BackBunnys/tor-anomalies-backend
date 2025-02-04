@@ -1,5 +1,8 @@
 package mil.barsolcom.tor_anomalies_backend.controller.web.rest.configuration;
 
+import org.algorithmtools.ad4j.engine.AnomalyDetectionEngine;
+import org.algorithmtools.ad4j.enumtype.AnomalyDictType;
+import org.algorithmtools.ad4j.pojo.AnomalyDetectionContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -21,5 +24,10 @@ public class WebConfiguration {
         source.registerCorsConfiguration("/**", corsConfig);
 
         return new CorsWebFilter(source);
+    }
+
+    @Bean
+    public AnomalyDetectionEngine detectionEngine() {
+        return new AnomalyDetectionEngine();
     }
 }
