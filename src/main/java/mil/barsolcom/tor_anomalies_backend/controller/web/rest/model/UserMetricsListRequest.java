@@ -1,6 +1,7 @@
 package mil.barsolcom.tor_anomalies_backend.controller.web.rest.model;
 
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -14,7 +15,10 @@ public class UserMetricsListRequest {
     }
 
     private Type type;
-    private Interval<LocalDate> dateInterval;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDate from;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDate to;
     private Set<String> countries;
 
     public Type getType() {
@@ -25,12 +29,20 @@ public class UserMetricsListRequest {
         this.type = type;
     }
 
-    public Interval<LocalDate> getDateInterval() {
-        return dateInterval;
+    public LocalDate getFrom() {
+        return from;
     }
 
-    public void setDateInterval(Interval<LocalDate> dateInterval) {
-        this.dateInterval = dateInterval;
+    public void setFrom(LocalDate from) {
+        this.from = from;
+    }
+
+    public LocalDate getTo() {
+        return to;
+    }
+
+    public void setTo(LocalDate to) {
+        this.to = to;
     }
 
     public Set<String> getCountries() {

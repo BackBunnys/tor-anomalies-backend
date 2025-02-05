@@ -1,4 +1,4 @@
-package mil.barsolcom.tor_anomalies_backend.controller.web.rest.model;
+package mil.barsolcom.tor_anomalies_backend.common;
 
 import lombok.Data;
 

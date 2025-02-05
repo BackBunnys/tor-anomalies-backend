@@ -1,6 +1,7 @@
-package mil.barsolcom.tor_anomalies_backend.controller.web.rest.model;
+package mil.barsolcom.tor_anomalies_backend.model;
 
 import lombok.Data;
+import mil.barsolcom.tor_anomalies_backend.common.Interval;
 
 import java.time.LocalDate;
 

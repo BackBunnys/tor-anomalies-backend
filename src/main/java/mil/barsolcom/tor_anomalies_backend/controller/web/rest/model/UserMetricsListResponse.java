@@ -1,6 +1,7 @@
 package mil.barsolcom.tor_anomalies_backend.controller.web.rest.model;
 
 import lombok.Data;
+import mil.barsolcom.tor_anomalies_backend.model.Anomaly;
 import mil.barsolcom.tor_anomalies_backend.model.UserMetrics;
 
 import java.util.List;
