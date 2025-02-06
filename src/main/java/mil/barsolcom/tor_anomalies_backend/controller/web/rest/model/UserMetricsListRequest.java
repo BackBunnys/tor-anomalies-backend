@@ -14,12 +14,29 @@ public class UserMetricsListRequest {
         ALL
     }
 
+    public enum Sensitivity {
+        LOW(365),
+        MEDIUM(91),
+        HIGH(30);
+
+        private int windowDays;
+
+        Sensitivity(int windowDays) {
+            this.windowDays = windowDays;
+        }
+
+        public int getWindowDays() {
+            return windowDays;
+        }
+    }
+
     private Type type;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDate from;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDate to;
     private Set<String> countries;
+    private Sensitivity sensitivity;
 
     public Type getType() {
         return type;
@@ -51,5 +68,13 @@ public class UserMetricsListRequest {
 
     public void setCountries(Set<String> countries) {
         this.countries = countries;
+    }
+
+    public Sensitivity getSensitivity() {
+        return sensitivity;
+    }
+
+    public void setSensitivity(Sensitivity sensitivity) {
+        this.sensitivity = sensitivity;
     }
 }

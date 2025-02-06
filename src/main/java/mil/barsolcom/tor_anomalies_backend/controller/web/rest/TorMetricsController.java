@@ -10,6 +10,7 @@ import mil.barsolcom.tor_anomalies_backend.service.user_metrics.model.UserMetric
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Collections;
 
 import static mil.barsolcom.tor_anomalies_backend.service.user_metrics.Utils.groupByDate;
@@ -34,7 +35,7 @@ public class TorMetricsController {
                     Collections.singleton(UserMetricsType.RELAY)
                 ))
                 .collectList()
-                .map(metrics -> new UserMetricsListResponse(metrics, anomalyDetector.detect(groupByDate(metrics))));
+                .map(metrics -> new UserMetricsListResponse(metrics, anomalyDetector.detect(groupByDate(metrics), Duration.ofDays(request.getSensitivity().getWindowDays()))));
     }
 
 
@@ -48,7 +49,7 @@ public class TorMetricsController {
                         Collections.singleton(UserMetricsType.BRIDGE)
                 ))
                 .collectList()
-                .map(metrics -> new UserMetricsListResponse(metrics, anomalyDetector.detect(groupByDate(metrics))));
+                .map(metrics -> new UserMetricsListResponse(metrics, anomalyDetector.detect(groupByDate(metrics), Duration.ofDays(request.getSensitivity().getWindowDays()))));
     }
 
     @GetMapping("/all")
@@ -60,6 +61,6 @@ public class TorMetricsController {
                         UserMetricsType.ALL
                 ))
                 .collectList()
-                .map(metrics -> new UserMetricsListResponse(metrics, anomalyDetector.detect(groupByDate(metrics))));
+                .map(metrics -> new UserMetricsListResponse(metrics, anomalyDetector.detect(groupByDate(metrics), Duration.ofDays(request.getSensitivity().getWindowDays()))));
     }
 }

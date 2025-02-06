@@ -10,10 +10,12 @@ import org.algorithmtools.ad4j.pojo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Service
 public class Ad4jAnomalyDetector implements AnomalyDetector {
@@ -44,6 +46,51 @@ public class Ad4jAnomalyDetector implements AnomalyDetector {
                 .orElse(Collections.emptyList());
     }
 
+    public List<Anomaly> detect(List<UserMetrics> metrics, Duration window) {
+        int windowSize = (int) window.toDays();
+        if (windowSize > metrics.size()) {
+            return detect(metrics);
+        }
+
+        return mergeIntervals(IntStream.rangeClosed(0, metrics.size() - windowSize - 1)
+                .mapToObj(i -> metrics.subList(i, i + windowSize))
+                .map(this::detect)
+                .flatMap(Collection::stream)
+                .toList()
+        );
+    }
+
+    public List<Anomaly> mergeIntervals(List<Anomaly> anomalies) {
+        if (anomalies.isEmpty()) {
+            return List.of();
+        }
+
+        List<Interval<LocalDate>> intervals = new ArrayList<>(anomalies.stream().map(Anomaly::getInterval).toList());
+
+        // Sort intervals by start date
+        intervals.sort(Comparator.comparing(Interval::getStart));
+
+        List<Interval<LocalDate>> merged = new ArrayList<>();
+        Interval<LocalDate> current = intervals.getFirst();
+
+        for (int i = 1; i < intervals.size(); i++) {
+            Interval<LocalDate> next = intervals.get(i);
+
+            if (!next.getStart().isAfter(current.getEnd())) {
+                // Intervals overlap, merge them
+                current.setEnd(current.getEnd().isAfter(next.getEnd()) ? current.getEnd() : next.getEnd());
+            } else {
+                // No overlap, add the current interval and move to the next
+                merged.add(current);
+                current = next;
+            }
+        }
+
+        // Add the last interval
+        merged.add(current);
+        return merged.stream().map(Anomaly::new).toList();
+    }
+
     private List<IndicatorSeries> mapToSeries(List<UserMetrics> metrics) {
         return metrics.stream()
                 .map(metric -> new IndicatorSeries(metric.getDate().toEpochDay(), metric.getUsers().intValue(), "index"))
@@ -52,8 +99,13 @@ public class Ad4jAnomalyDetector implements AnomalyDetector {
 
     private List<Anomaly> mapToAnomalies(List<AnomalyIndicatorSeries> anomalySeries) {
         List<Anomaly> anomalies = new ArrayList<>();
+
         if (positiveOnly) {
             anomalySeries = anomalySeries.stream().filter(s -> s.getAnomalyInfluence() == AnomalyDictType.INFLUENCE_POSITIVE).toList();
+        }
+
+        if (anomalySeries.isEmpty()) {
+            return anomalies;
         }
 
         List<Interval<LocalDate>> anomaliesIntervals = new ArrayList<>();
