@@ -8,28 +8,26 @@ import org.algorithmtools.ad4j.engine.AnomalyDetectionEngine;
 import org.algorithmtools.ad4j.enumtype.AnomalyDictType;
 import org.algorithmtools.ad4j.pojo.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
-@Service
-public class Ad4jAnomalyDetector implements AnomalyDetector {
-    private boolean positiveOnly = true;
+public abstract class Ad4jAnomalyDetector extends AnomalyDetector {
+    private boolean positiveOnly = false;
     private int anomaliesGap = 1;
-    private int anomaliesOffset = 7;
+    private int anomaliesOffset = 1;
     private final AnomalyDetectionEngine engine;
+    private final AnomalyDictType algorithm;
 
     @Autowired
-    public Ad4jAnomalyDetector(AnomalyDetectionEngine engine) {
+    public Ad4jAnomalyDetector(AnomalyDetectionEngine engine, String algorithmName, AnomalyDictType algorithm) {
+        super(algorithmName);
         this.engine = engine;
+        this.algorithm = algorithm;
     }
 
-    @Override
     public List<Anomaly> detect(List<UserMetrics> metrics) {
         List<Anomaly> anomalies = new ArrayList<>();
         List<IndicatorSeries> series = mapToSeries(metrics);
@@ -39,15 +37,23 @@ public class Ad4jAnomalyDetector implements AnomalyDetector {
             return anomalies;
         }
         return result.getIndicatorEvaluateInfo(AnomalyDictType.TYPE_OUTLIERS_VALUE).stream()
-                .filter(evaluateInfo -> evaluateInfo.getAnomalyDetectionModel() == AnomalyDictType.MODEL_ADM_ZScore)
+                .filter(evaluateInfo -> evaluateInfo.getAnomalyDetectionModel() == algorithm)
                 .findFirst()
                 .map(IndicatorEvaluateInfo::getAnomalySeriesList)
                 .map(this::mapToAnomalies)
                 .orElse(Collections.emptyList());
     }
 
-    public List<Anomaly> detect(List<UserMetrics> metrics, Duration window) {
-        int windowSize = (int) window.toDays();
+    @Override
+    public List<Anomaly> detect(List<UserMetrics> metrics, Map<String, Object> parameters) {
+        int windowSize;
+
+        if (!(parameters.get("window") instanceof Duration duration)) {
+            throw new IllegalArgumentException("window parameter must be instance of Duration");
+        } else {
+            windowSize = (int) duration.toDays();
+        }
+
         if (windowSize > metrics.size()) {
             return detect(metrics);
         }
@@ -116,7 +122,7 @@ public class Ad4jAnomalyDetector implements AnomalyDetector {
         for (int i = 1; i < anomalySeries.size(); ++i) {
             var currentValue = anomalySeries.get(i).getIndicatorSeries().getTime();
             var previousValue = anomalySeries.get(i - 1).getIndicatorSeries().getTime();
-            if (currentValue - previousValue > 7) {
+            if (currentValue - previousValue > anomaliesOffset) {
                 anomaliesIntervals.add(new Interval<>(LocalDate.ofEpochDay(firstDate - 1), LocalDate.ofEpochDay(lastDate + 1)));
                 firstDate = currentValue;
             }

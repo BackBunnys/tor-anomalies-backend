@@ -5,7 +5,6 @@ import mil.barsolcom.tor_anomalies_backend.service.user_metrics.model.UserMetric
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
 
 public interface UserMetricsRepository {

@@ -3,7 +3,8 @@ package mil.barsolcom.tor_anomalies_backend.controller.web.rest;
 import mil.barsolcom.tor_anomalies_backend.common.Interval;
 import mil.barsolcom.tor_anomalies_backend.controller.web.rest.model.UserMetricsListRequest;
 import mil.barsolcom.tor_anomalies_backend.controller.web.rest.model.UserMetricsListResponse;
-import mil.barsolcom.tor_anomalies_backend.service.anomaly.AnomalyDetector;
+import mil.barsolcom.tor_anomalies_backend.service.anomaly.AnomalyService;
+import mil.barsolcom.tor_anomalies_backend.service.anomaly.model.AnalyzeInput;
 import mil.barsolcom.tor_anomalies_backend.service.user_metrics.UserMetricsService;
 import mil.barsolcom.tor_anomalies_backend.service.user_metrics.model.UserMetricsSearch;
 import mil.barsolcom.tor_anomalies_backend.service.user_metrics.model.UserMetricsType;
@@ -12,6 +13,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static mil.barsolcom.tor_anomalies_backend.service.user_metrics.Utils.groupByDate;
 
@@ -19,11 +22,16 @@ import static mil.barsolcom.tor_anomalies_backend.service.user_metrics.Utils.gro
 @RequestMapping("v1/metrics")
 public class TorMetricsController {
     private final UserMetricsService userMetricsService;
-    private final AnomalyDetector anomalyDetector;
+    private final AnomalyService anomalyService;
 
-    public TorMetricsController(UserMetricsService userMetricsService, AnomalyDetector anomalyDetector) {
+    public TorMetricsController(UserMetricsService userMetricsService, AnomalyService anomalyService) {
         this.userMetricsService = userMetricsService;
-        this.anomalyDetector = anomalyDetector;
+        this.anomalyService = anomalyService;
+    }
+
+    @GetMapping("/algorithms")
+    Mono<List<String>> algorithms() {
+        return Mono.just(anomalyService.getAlgorithms());
     }
 
     @GetMapping("/relays")
@@ -35,10 +43,17 @@ public class TorMetricsController {
                     Collections.singleton(UserMetricsType.RELAY)
                 ))
                 .collectList()
-                .map(metrics -> new UserMetricsListResponse(metrics, anomalyDetector.detect(groupByDate(metrics), Duration.ofDays(request.getSensitivity().getWindowDays()))));
+                .map(metrics -> new UserMetricsListResponse(metrics,
+                        anomalyService.analyze(
+                            new AnalyzeInput(
+                                request.getAlgorithm(),
+                                groupByDate(metrics),
+                                Map.of("window", Duration.ofDays(request.getSensitivity().getWindowDays()))
+                            )
+                        )
+                    )
+                );
     }
-
-
 
     @GetMapping("/bridges")
     Mono<UserMetricsListResponse> bridges(@ModelAttribute UserMetricsListRequest request) {
@@ -49,7 +64,16 @@ public class TorMetricsController {
                         Collections.singleton(UserMetricsType.BRIDGE)
                 ))
                 .collectList()
-                .map(metrics -> new UserMetricsListResponse(metrics, anomalyDetector.detect(groupByDate(metrics), Duration.ofDays(request.getSensitivity().getWindowDays()))));
+                .map(metrics -> new UserMetricsListResponse(metrics,
+                                anomalyService.analyze(
+                                        new AnalyzeInput(
+                                                request.getAlgorithm(),
+                                                groupByDate(metrics),
+                                                Map.of("window", Duration.ofDays(request.getSensitivity().getWindowDays()))
+                                        )
+                                )
+                        )
+                );
     }
 
     @GetMapping("/all")
@@ -61,6 +85,15 @@ public class TorMetricsController {
                         UserMetricsType.ALL
                 ))
                 .collectList()
-                .map(metrics -> new UserMetricsListResponse(metrics, anomalyDetector.detect(groupByDate(metrics), Duration.ofDays(request.getSensitivity().getWindowDays()))));
+                .map(metrics -> new UserMetricsListResponse(metrics,
+                                anomalyService.analyze(
+                                        new AnalyzeInput(
+                                                request.getAlgorithm(),
+                                                groupByDate(metrics),
+                                                Map.of("window", Duration.ofDays(request.getSensitivity().getWindowDays()))
+                                        )
+                                )
+                        )
+                );
     }
 }

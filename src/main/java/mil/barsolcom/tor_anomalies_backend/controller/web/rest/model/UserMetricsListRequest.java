@@ -1,6 +1,7 @@
 package mil.barsolcom.tor_anomalies_backend.controller.web.rest.model;
 
 import lombok.Data;
+import org.algorithmtools.ad4j.enumtype.AnomalyDictType;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
@@ -19,7 +20,7 @@ public class UserMetricsListRequest {
         MEDIUM(91),
         HIGH(30);
 
-        private int windowDays;
+        private final int windowDays;
 
         Sensitivity(int windowDays) {
             this.windowDays = windowDays;
@@ -37,6 +38,7 @@ public class UserMetricsListRequest {
     private LocalDate to;
     private Set<String> countries;
     private Sensitivity sensitivity;
+    private String algorithm;
 
     public Type getType() {
         return type;
@@ -76,5 +78,13 @@ public class UserMetricsListRequest {
 
     public void setSensitivity(Sensitivity sensitivity) {
         this.sensitivity = sensitivity;
+    }
+
+    public String getAlgorithm() {
+        return algorithm;
+    }
+
+    public void setAlgorithm(String algorithm) {
+        this.algorithm = algorithm;
     }
 }
